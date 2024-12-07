@@ -46,6 +46,8 @@ type app struct {
 	rootPath     string
 	manifestPath string
 
+	onClose cmd.Commands
+
 	env      map[string]string
 	manifest *manifest.Manifest
 	options  *options.Options
@@ -115,6 +117,15 @@ func Run() {
 
 		// Load the manifest.
 		return a.load()
+	})
+
+	a.OnClosing(func() (err error) {
+		if len(a.onClose) == 0 {
+			return
+		}
+
+		ctx := newExecContext()
+		return a.execCommands(ctx, a.onClose)
 	})
 
 	grumble.Main(a.App)
@@ -189,6 +200,11 @@ func (a *app) load() (err error) {
 
 	// Prepare the commands.
 	a.commands, err = cmd.ParseManifest(a.manifest)
+	if err != nil {
+		return
+	}
+
+	a.onClose, err = cmd.OnClosingCommands(a.manifest)
 	if err != nil {
 		return
 	}

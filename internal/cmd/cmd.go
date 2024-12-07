@@ -88,6 +88,26 @@ func ParseManifest(m *manifest.Manifest) (cmds Commands, err error) {
 	return
 }
 
+func OnClosingCommands(m *manifest.Manifest) (cmds Commands, err error) {
+	cmdsRoot := make(Commands, 0, m.Commands.Count())
+	cmds = make(Commands, 0, len(m.OnClosing))
+
+	// Add the commands from the manifest.
+	addCommands("", &cmdsRoot, m.Commands)
+
+	for _, dep := range m.OnClosing {
+		var dcmd *Command
+		dcmd, err = getCommandByPath(cmdsRoot, "", dep)
+		if err != nil {
+			err = fmt.Errorf("onclosing: invalid dependency value: %v", err)
+			return
+		}
+		cmds = append(cmds, dcmd)
+	}
+
+	return
+}
+
 func addCommands(parentPath string, cmds *Commands, mcs manifest.Commands) {
 	for name, mc := range mcs {
 		c := &Command{

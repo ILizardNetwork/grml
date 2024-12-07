@@ -36,6 +36,8 @@ type Manifest struct {
 	Version int    `yaml:"version"`
 	Project string `yaml:"project"`
 
+	OnClosing []string `yaml:"onclosing"`
+
 	Env         yaml.MapSlice          `yaml:"env"` // Use MapSlice to preserve order.
 	Options     map[string]interface{} `yaml:"options"`
 	Interpreter string                 `yaml:"interpreter"`
