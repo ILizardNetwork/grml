@@ -21,6 +21,7 @@ package manifest
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -36,6 +37,7 @@ type Manifest struct {
 	Version int    `yaml:"version"`
 	Project string `yaml:"project"`
 
+	EnvFiles    []string               `yaml:"envs"`
 	Env         yaml.MapSlice          `yaml:"env"` // Use MapSlice to preserve order.
 	Options     map[string]interface{} `yaml:"options"`
 	Interpreter string                 `yaml:"interpreter"`
@@ -63,9 +65,38 @@ func (cs Commands) Count() (n int) {
 	return
 }
 
-func (m *Manifest) EvalEnv(parentEnv map[string]string) (env map[string]string) {
-	// Prepare and evaluate the environment variables.
+func (m *Manifest) EvalEnv(parentEnv map[string]string) (env map[string]string, err error) {
+	// Read environment variable files if applicable.
 	env = make(map[string]string)
+	for _, ef := range m.EnvFiles {
+		var content []byte
+		content, err = os.ReadFile(ef)
+		if err != nil {
+			err = fmt.Errorf("unable to read env file '%s': %v", ef, err)
+			return
+		}
+
+		// Unmarshal environment variable file in an order preserved manner.
+		var ordered yaml.MapSlice
+		err = yaml.Unmarshal(content, &ordered)
+		if err != nil {
+			err = fmt.Errorf("unable to unmarshal env data of file '%s': %v", ef, err)
+			return
+		}
+		for _, i := range ordered {
+			key := fmt.Sprintf("%v", i.Key)
+			value := fmt.Sprintf("%v", i.Value)
+
+			// Replace already existing variable names with their corresponding values.
+			for k, v := range env {
+				value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
+			}
+
+			env[key] = value
+		}
+	}
+
+	// Prepare and evaluate the environment variables.
 	for _, i := range m.Env {
 		key := fmt.Sprintf("%v", i.Key)
 		value := fmt.Sprintf("%v", i.Value)
