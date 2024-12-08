@@ -2,7 +2,7 @@ version: 3
 project: grml
 
 env:
-    VERSION: 1.1.0
+    VERSION: 1.2.0
     BINDIR:  ${ROOT}/bin
 
 commands:
