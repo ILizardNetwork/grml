@@ -90,12 +90,12 @@ func ParseManifest(m *manifest.Manifest) (cmds Commands, err error) {
 
 func OnClosingCommands(m *manifest.Manifest) (cmds Commands, err error) {
 	cmdsRoot := make(Commands, 0, m.Commands.Count())
-	cmds = make(Commands, 0, len(m.OnClosing))
+	cmds = make(Commands, 0, len(m.OnExit))
 
 	// Add the commands from the manifest.
 	addCommands("", &cmdsRoot, m.Commands)
 
-	for _, dep := range m.OnClosing {
+	for _, dep := range m.OnExit {
 		var dcmd *Command
 		dcmd, err = getCommandByPath(cmdsRoot, "", dep)
 		if err != nil {

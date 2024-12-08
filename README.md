@@ -9,15 +9,21 @@ A minimal sample can be found within the [sample](sample/grml.yaml) directory. E
 
 ## Installation
 ### From Source
-    go install github.com/desertbit/grml@latest
+    go install github.com/ilizardnetwork/grml@latest
 
 ### Prebuild Binaries
-https://github.com/desertbit/grml/releases
+https://github.com/ilizardnetwork/grml/releases
 
 ## Specification
-- Environment variables can be defined in the **env** section. These variables are passed to all run target processes.
+- Environment variables can either be defined in the **env** or **envs** section.  
+  The latter defines paths to dedicated files which use the `key: value` pair syntax.  
+  Variables declared in those files will be evaluated first, ordered by their sequence  
+  and overwritten by their successor or `env` variable if applicable.  
+  These variables are passed to all run target processes.
 - Variables are also accessible with the `${}` selector within **help** messages and **import** statements.
 - Dependencies can be specified within the command's **deps** section.
+- **onExit** can be specified to execute a list of commands when grml exits.  
+  Use the syntax of the `deps` field.
 
 ### Additonal Environment Variables
 
