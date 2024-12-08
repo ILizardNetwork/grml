@@ -91,15 +91,15 @@ func (m *Manifest) EvalEnv(parentEnv map[string]string) (env map[string]string, 
 		var content []byte
 		content, err = os.ReadFile(ef)
 		if err != nil {
-			err = fmt.Errorf("unable to read env file '%s': %v", ef, err)
+			err = fmt.Errorf("read env file '%s': %v", ef, err)
 			return
 		}
 
-		// Unmarshal environment variable file in an order preserved manner.
+		// Unmarshal environment variable file in an order preserving manner.
 		var ordered yaml.MapSlice
 		err = yaml.Unmarshal(content, &ordered)
 		if err != nil {
-			err = fmt.Errorf("unable to unmarshal env data of file '%s': %v", ef, err)
+			err = fmt.Errorf("unmarshal env file '%s': %v", ef, err)
 			return
 		}
 
