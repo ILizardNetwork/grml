@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  Changes:
+ *    - 08 Dec. 2024: Modified by xIRoXaSx.
  */
 
 package cmd
@@ -85,6 +88,26 @@ func ParseManifest(m *manifest.Manifest) (cmds Commands, err error) {
 
 	// Link the dependencies now.
 	err = linkDeps(cmds, cmds)
+	return
+}
+
+func OnExitCommands(m *manifest.Manifest) (cmds Commands, err error) {
+	cmdsRoot := make(Commands, 0, m.Commands.Count())
+	cmds = make(Commands, 0, len(m.OnExit))
+
+	// Add the commands from the manifest.
+	addCommands("", &cmdsRoot, m.Commands)
+
+	for _, dep := range m.OnExit {
+		var dcmd *Command
+		dcmd, err = getCommandByPath(cmdsRoot, "", dep)
+		if err != nil {
+			err = fmt.Errorf("onExit: invalid dependency value: %v", err)
+			return
+		}
+		cmds = append(cmds, dcmd)
+	}
+
 	return
 }
 

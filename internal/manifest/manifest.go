@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  Changes:
+ *    - 08 Dec. 2024: Modified by xIRoXaSx.
  */
 
 package manifest
@@ -31,12 +34,14 @@ import (
 )
 
 const (
-	Version = 2
+	Version = 3
 )
 
 type Manifest struct {
 	Version int    `yaml:"version"`
 	Project string `yaml:"project"`
+
+	OnExit []string `yaml:"onExit"`
 
 	EnvFiles    []string               `yaml:"envs"`
 	Env         yaml.MapSlice          `yaml:"env"` // Use MapSlice to preserve order.

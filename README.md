@@ -22,6 +22,8 @@ https://github.com/ilizardnetwork/grml/releases
   These variables are passed to all run target processes.
 - Variables are also accessible with the `${}` selector within **help** messages and **import** statements.
 - Dependencies can be specified within the command's **deps** section.
+- **onExit** can be specified to execute a list of commands when grml exits.  
+  Use the syntax of the `deps` field.
 
 ### Additonal Environment Variables
 
@@ -32,3 +34,9 @@ The process environment is inherited and following additonal variables are set:
 | ROOT    | Path to the root build directory containing the grml.yaml file |
 | PROJECT | Project name as specified within the grml file                 |
 | NUMCPU  | Number of CPU cores                                            |
+
+## Changes
+This fork has been modified.
+In respect to the provided license, changes are stated in the modified source files and 
+[changelog.md](https://github.com/ILizardNetwork/grml/blob/master/changelog.md).  
+**Upstream**: https://github.com/desertbit/grml

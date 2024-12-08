@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  Changes:
+ *    - 08 Dec. 2024: Modified by xIRoXaSx.
  */
 
 package app
@@ -45,6 +48,8 @@ type app struct {
 	verbose      bool
 	rootPath     string
 	manifestPath string
+
+	onExit cmd.Commands
 
 	env      map[string]string
 	manifest *manifest.Manifest
@@ -115,6 +120,15 @@ func Run() {
 
 		// Load the manifest.
 		return a.load()
+	})
+
+	a.OnClosing(func() (err error) {
+		if len(a.onExit) == 0 {
+			return
+		}
+
+		ctx := newExecContext()
+		return a.execCommands(ctx, a.onExit)
 	})
 
 	grumble.Main(a.App)
@@ -192,6 +206,11 @@ func (a *app) load() (err error) {
 
 	// Prepare the commands.
 	a.commands, err = cmd.ParseManifest(a.manifest)
+	if err != nil {
+		return
+	}
+
+	a.onExit, err = cmd.OnExitCommands(a.manifest)
 	if err != nil {
 		return
 	}
