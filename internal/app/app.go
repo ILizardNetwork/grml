@@ -179,7 +179,10 @@ func (a *app) load() (err error) {
 	a.env["PROJECT"] = a.manifest.Project
 	a.env["ROOT"] = a.rootPath
 	a.env["NUMCPU"] = strconv.Itoa(runtime.NumCPU())
-	a.env = a.manifest.EvalEnv(a.env) // Add values from manifest.
+	a.env, err = a.manifest.EvalEnv(a.env) // Add values from manifest.
+	if err != nil {
+		return
+	}
 
 	// Group all commands to the builtin group (help message).
 	cmds := a.Commands().All()

@@ -21,6 +21,7 @@ package manifest
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -36,6 +37,7 @@ type Manifest struct {
 	Version int    `yaml:"version"`
 	Project string `yaml:"project"`
 
+	EnvFiles    []string               `yaml:"envs"`
 	Env         yaml.MapSlice          `yaml:"env"` // Use MapSlice to preserve order.
 	Options     map[string]interface{} `yaml:"options"`
 	Interpreter string                 `yaml:"interpreter"`
@@ -63,21 +65,50 @@ func (cs Commands) Count() (n int) {
 	return
 }
 
-func (m *Manifest) EvalEnv(parentEnv map[string]string) (env map[string]string) {
-	// Prepare and evaluate the environment variables.
-	env = make(map[string]string)
-	for _, i := range m.Env {
-		key := fmt.Sprintf("%v", i.Key)
-		value := fmt.Sprintf("%v", i.Value)
+func (m *Manifest) EvalEnv(parentEnv map[string]string) (env map[string]string, err error) {
+	// Define a function which evaluates environment variables and
+	// appends them to the given map.
+	appendEnvVars := func(ymap yaml.MapSlice, vars map[string]string) map[string]string {
+		for _, i := range ymap {
+			key := fmt.Sprintf("%v", i.Key)
+			value := fmt.Sprintf("%v", i.Value)
 
-		for k, v := range env {
-			value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
+			// Replace already existing variable names with their corresponding values.
+			for k, v := range vars {
+				value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
+			}
+			for k, v := range parentEnv {
+				value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
+			}
+			vars[key] = value
 		}
-		for k, v := range parentEnv {
-			value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
-		}
-		env[key] = value
+		return vars
 	}
+
+	// Read environment variable files if applicable.
+	env = make(map[string]string)
+	for _, ef := range m.EnvFiles {
+		var content []byte
+		content, err = os.ReadFile(ef)
+		if err != nil {
+			err = fmt.Errorf("read env file '%s': %v", ef, err)
+			return
+		}
+
+		// Unmarshal environment variable file in an order preserving manner.
+		var ordered yaml.MapSlice
+		err = yaml.Unmarshal(content, &ordered)
+		if err != nil {
+			err = fmt.Errorf("unmarshal env file '%s': %v", ef, err)
+			return
+		}
+
+		// Prepare and evaluate the environment variables.
+		env = appendEnvVars(ordered, env)
+	}
+
+	// Prepare and evaluate the environment variables.
+	env = appendEnvVars(m.Env, env)
 
 	// Merge missing values from the parent environment.
 	for k, v := range parentEnv {
