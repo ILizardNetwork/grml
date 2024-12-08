@@ -88,7 +88,7 @@ func ParseManifest(m *manifest.Manifest) (cmds Commands, err error) {
 	return
 }
 
-func OnClosingCommands(m *manifest.Manifest) (cmds Commands, err error) {
+func OnExitCommands(m *manifest.Manifest) (cmds Commands, err error) {
 	cmdsRoot := make(Commands, 0, m.Commands.Count())
 	cmds = make(Commands, 0, len(m.OnExit))
 
@@ -99,7 +99,7 @@ func OnClosingCommands(m *manifest.Manifest) (cmds Commands, err error) {
 		var dcmd *Command
 		dcmd, err = getCommandByPath(cmdsRoot, "", dep)
 		if err != nil {
-			err = fmt.Errorf("onclosing: invalid dependency value: %v", err)
+			err = fmt.Errorf("onExit: invalid dependency value: %v", err)
 			return
 		}
 		cmds = append(cmds, dcmd)
