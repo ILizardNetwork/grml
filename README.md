@@ -9,10 +9,10 @@ A minimal sample can be found within the [sample](sample/grml.yaml) directory. E
 
 ## Installation
 ### From Source
-    go install github.com/desertbit/grml@latest
+    go install github.com/ilizardnetwork/grml@latest
 
 ### Prebuild Binaries
-https://github.com/desertbit/grml/releases
+https://github.com/ilizardnetwork/grml/releases
 
 ## Specification
 - Environment variables can either be defined in the **env** or **envs** section.  

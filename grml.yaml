@@ -1,9 +1,14 @@
-version: 1
+version: 2
 project: grml
+
+envs:
+    - ./bin/env/a.yaml
+    - ./bin/env/b.yaml
 
 env:
     VERSION: 1.0.0
     BINDIR:  ${ROOT}/bin
+    TEST_D: "${TEST_D}---"
 
 commands:
     build:
@@ -38,3 +43,15 @@ commands:
                         -e GOARCH=amd64 \
                         golang:alpine \
                             go build -o bin/grml-${VERSION}-win-amd64.exe -ldflags="-s -w"
+
+    test:
+        help: test new functionalities
+        exec: |
+            echo "A: ${TEST_A}"
+            echo "B: ${TEST_B}"
+            echo "C: ${TEST_C}"
+            echo "D: ${TEST_D}"
+            echo "X: ${TEST_X}"
+            echo "Y: ${TEST_Y}"
+            echo "Z: ${TEST_Z}"
+            echo "D: ${BINDIR}"
