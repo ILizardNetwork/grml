@@ -19,6 +19,7 @@
 package manifest
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -66,25 +67,6 @@ func (cs Commands) Count() (n int) {
 }
 
 func (m *Manifest) EvalEnv(parentEnv map[string]string) (env map[string]string, err error) {
-	// Define a function which evaluates environment variables and
-	// appends them to the given map.
-	appendEnvVars := func(ymap yaml.MapSlice, vars map[string]string) map[string]string {
-		for _, i := range ymap {
-			key := fmt.Sprintf("%v", i.Key)
-			value := fmt.Sprintf("%v", i.Value)
-
-			// Replace already existing variable names with their corresponding values.
-			for k, v := range vars {
-				value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
-			}
-			for k, v := range parentEnv {
-				value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
-			}
-			vars[key] = value
-		}
-		return vars
-	}
-
 	// Read environment variable files if applicable.
 	env = make(map[string]string)
 	for _, ef := range m.EnvFiles {
@@ -104,11 +86,17 @@ func (m *Manifest) EvalEnv(parentEnv map[string]string) (env map[string]string, 
 		}
 
 		// Prepare and evaluate the environment variables.
-		env = appendEnvVars(ordered, env)
+		env, err = appendEnvVars(ordered, env, parentEnv)
+		if err != nil {
+			return
+		}
 	}
 
 	// Prepare and evaluate the environment variables.
-	env = appendEnvVars(m.Env, env)
+	env, err = appendEnvVars(m.Env, env, parentEnv)
+	if err != nil {
+		return
+	}
 
 	// Merge missing values from the parent environment.
 	for k, v := range parentEnv {
@@ -117,6 +105,70 @@ func (m *Manifest) EvalEnv(parentEnv map[string]string) (env map[string]string, 
 		}
 	}
 	return
+}
+
+// appendEnvVars evaluates environment variables and appends them to the given map.
+func appendEnvVars(ymap yaml.MapSlice, vars, parentEnv map[string]string) (map[string]string, error) {
+	for _, i := range ymap {
+		var (
+			key   = fmt.Sprintf("%v", i.Key)
+			value string
+		)
+		switch v := i.Value.(type) {
+		case yaml.MapSlice:
+			vmap := make(map[string]interface{})
+			vmap = unmarshalCustom(v, key, key, vmap)
+			cont, err := json.Marshal(vmap)
+			if err != nil {
+				return nil, err
+			}
+			value = string(cont)
+
+		case []interface{}:
+			cont, err := json.Marshal(v)
+			if err != nil {
+				return nil, err
+			}
+			value = string(cont)
+
+		default:
+			value = fmt.Sprintf("%v", i.Value)
+		}
+
+		// Replace already existing variable names with their corresponding values.
+		for k, v := range vars {
+			value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
+		}
+		for k, v := range parentEnv {
+			value = strings.Replace(value, fmt.Sprintf("${%s}", k), v, -1)
+		}
+		vars[key] = value
+	}
+	return vars, nil
+}
+
+// unmarshalCustom unmarshals the yaml.MapSlice type (key value pair slice) into a map if required.
+func unmarshalCustom(v interface{}, rootKey, key string, res map[string]interface{}) map[string]interface{} {
+	newMap := make(map[string]interface{})
+	ym, ok := v.(yaml.MapSlice)
+	if ok {
+		for _, i := range ym {
+			key := fmt.Sprintf("%v", i.Key)
+			newMap = unmarshalCustom(i.Value, rootKey, key, newMap)
+		}
+	}
+
+	if len(newMap) == 0 {
+		res[key] = v
+		return res
+	}
+
+	// Ensure that the root key (variable name) won't get marshalled as well.
+	if key == rootKey {
+		return newMap
+	}
+	res[key] = newMap
+	return res
 }
 
 func (m *Manifest) ParseOptions() (o *options.Options, err error) {
