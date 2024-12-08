@@ -34,3 +34,9 @@ The process environment is inherited and following additonal variables are set:
 | ROOT    | Path to the root build directory containing the grml.yaml file |
 | PROJECT | Project name as specified within the grml file                 |
 | NUMCPU  | Number of CPU cores                                            |
+
+## Changes
+This fork has been modified.
+In respect to the provided license, changes are stated in the modified source files and 
+[changelog.md](https://github.com/ILizardNetwork/grml/blob/master/changelog.md).  
+**Upstream**: https://github.com/desertbit/grml
